@@ -7,12 +7,12 @@ define('BOOKS_FILE', 'books.txt'); // <id> "\t" <name> "\t" <remark> "\t" <peopl
 
 $books = get_books();
 foreach (file('tags.txt') as $tag_line) {
-    $url = "https://book.douban.com$tag_line";
-    echo $url,PHP_EOL;
+    $url = "https://book.douban.com/tag/".urlencode(trim($tag_line));
+    echo $tag_line,PHP_EOL;
     $code = download_page($url);
     if (preg_match_all('#https://book.douban.com/subject/(\d+)/#', $code, $m)) {
         foreach ($m[0] as $i => $book_url) {
-            do_book(download_page($url), $m[1][$i]);
+            do_book(download_page($book_url), $m[1][$i]);
         }
     }
 }
@@ -29,6 +29,7 @@ function do_book($code, $id)
     if (isset($books[$id])) return;
     $books[$id] = $a = parse_book($code);
     echo "$id\t", implode(" ", $a),PHP_EOL;
+    set_books($books);
 }
 function get_books()
 {
@@ -95,6 +96,8 @@ function download_page($url)
     $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,zh-TW;q=0.8';
     $headers[] = 'Cookie: ll=\"108296\"; bid=3plYmfbXzGA; __utma=30149280.1936290155.1549798218.1549798218.1549798218.1; __utmc=30149280; __utmz=30149280.1549798218.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ap_v=0,6.0; __utma=81379588.867767646.1549798222.1549798222.1549798222.1; __utmc=81379588; __utmz=81379588.1549798222.1.1.utmcsr=douban.com|utmccn=(referral)|utmcmd=referral|utmcct=/; _pk_ref.100001.3ac3=%5B%22%22%2C%22%22%2C1549798222%2C%22https%3A%2F%2Fwww.douban.com%2F%22%5D; _pk_ses.100001.3ac3=*; gr_user_id=42269aba-4f48-479f-98fb-62d724dc7641; gr_session_id_22c937bbd8ebd703f2d8e9445f7dfd03=d0e18f04-61c7-4b5a-8c22-7f1ebc577dfb; gr_cs1_d0e18f04-61c7-4b5a-8c22-7f1ebc577dfb=user_id%3A0; gr_session_id_22c937bbd8ebd703f2d8e9445f7dfd03_d0e18f04-61c7-4b5a-8c22-7f1ebc577dfb=true; __yadk_uid=IZv8BAMls8621KZ1vy3SqQdfbBuSXrck; _vwo_uuid_v2=DDD39897C3D741661F0AB3DBCA5CCAA04|ccf970930b91633129f179b53756ce25; Hm_lvt_6e5dcf7c287704f738c7febc2283cf0c=1549798229; Hm_lpvt_6e5dcf7c287704f738c7febc2283cf0c=1549798229; viewed=\"30325325_30431098\"; _pk_id.100001.3ac3=f279f025f526f11c.1549798222.1.1549798304.1549798222.; __utmb=30149280.7.10.1549798218; __utmb=81379588.6.10.1549798222; ct=y';
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // for windows
 
     $result = curl_exec($ch);
     if (curl_errno($ch)) {
