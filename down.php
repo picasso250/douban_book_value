@@ -65,7 +65,7 @@ function set_books($books)
 }
 function parse_book($code)
 {
-    file_put_contents('tmp', $code);
+    // file_put_contents('tmp', $code);
     $ret = [];
     // 名称
     if (preg_match('#<title>(.+) \(豆瓣\)</title>#u', $code, $m)) {
