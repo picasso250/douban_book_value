@@ -20,13 +20,25 @@ foreach (file('tags.txt') as $tag_line) {
         }
     }
 }
-$values = [];
+$values0 = [];
+$values1 = [];
 foreach ($books as $id => $a) {
-    $values[$a[0]] = $a[1] * $a[2];
+    if ($a[3]) {
+        $values1[$a[0]] = $a[1] * $a[2];
+    } else {
+        $values0[$a[0]] = $a[1] * $a[2];
+    }
 }
-asort($values);
-print_r($values);
+$a = topK($values0);
+$b = topK($values1);
+print_r($a);
+print_r($b);
 
+function topK($a, $k)
+{
+    arsort($a);
+    return array_slice($a, 0, $k);
+}
 function do_book($code, $id)
 {
     global $books;
