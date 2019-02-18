@@ -8,11 +8,15 @@ define('BOOKS_FILE', 'books.txt'); // <id> "\t" <name> "\t" <remark> "\t" <peopl
 $books = get_books();
 foreach (file('tags.txt') as $tag_line) {
     $url = "https://book.douban.com/tag/".urlencode(trim($tag_line));
-    echo $tag_line,PHP_EOL;
+    echo trim($tag_line),PHP_EOL;
     $code = download_page($url);
     if (preg_match_all('#https://book.douban.com/subject/(\d+)/#', $code, $m)) {
         foreach ($m[0] as $i => $book_url) {
-            do_book(download_page($book_url), $m[1][$i]);
+            $id = intval($m[1][$i]);
+            if (!isset($books[$id])) {
+                // echo $book_url,PHP_EOL;
+                do_book(download_page($book_url), $id);
+            }
         }
     }
 }
@@ -27,7 +31,12 @@ function do_book($code, $id)
 {
     global $books;
     if (isset($books[$id])) return;
-    $books[$id] = $a = parse_book($code);
+    $a = parse_book($code);
+    if (!$a) {
+        echo "$id 评价人数不足\n";
+        return;
+    }
+    $books[$id] = $a;
     echo "$id\t", implode(" ", $a),PHP_EOL;
     set_books($books);
 }
@@ -46,12 +55,17 @@ function set_books($books)
 {
     $f = fopen(BOOKS_FILE, "w");
     foreach ($books as $id => $b) {
+        assert(count($b) == 4);
+        if (count($b) !== 4) {
+            throw new Exception("should be 4");
+        }
         fwrite($f, "$id\t$b[0]\t$b[1]\t$b[2]\t$b[3]\n", 4096);
     }
     fclose($f);
 }
 function parse_book($code)
 {
+    file_put_contents('tmp', $code);
     $ret = [];
     // 名称
     if (preg_match('#<title>(.+) \(豆瓣\)</title>#u', $code, $m)) {
@@ -67,6 +81,10 @@ function parse_book($code)
     }
     // 是否小说
     $ret[] = intval(preg_match('#href="/tag/小说"#u', $code, $m));
+    if (count($ret) !== 4) {
+        // 评价人数不足
+        return false;
+    }
     return $ret;
 }
 function download_book($id)
