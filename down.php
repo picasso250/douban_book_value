@@ -29,8 +29,8 @@ foreach ($books as $id => $a) {
         $values0[$a[0]] = $a[1] * $a[2];
     }
 }
-$a = topK($values0);
-$b = topK($values1);
+$a = topK($values0, 10);
+$b = topK($values1, 10);
 print_r($a);
 print_r($b);
 
